@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Info - Modern Payment Gateway</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #13111C 0%, #201F2B 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        #welcome-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(8px);
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        
+        #welcome-popup.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .popup-content {
+            background: rgba(30, 30, 43, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+            padding: 2.5rem;
+            text-align: center;
+            max-width: 400px;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        #welcome-popup:not(.hidden) .popup-content {
+            transform: scale(1);
+        }
+
+        .payment-card {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .payment-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+        }
+
+        .neon-btn {
+            background: linear-gradient(45deg, #3B82F6, #8B5CF6);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .neon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .neon-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .neon-btn:hover::before {
+            left: 100%;
+        }
+
+        .payment-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .dana-icon {
+            background: linear-gradient(45deg, #3B82F6, #1E40AF);
+            color: white;
+        }
+
+        .ovo-icon {
+            background: linear-gradient(45deg, #8B5CF6, #6D28D9);
+            color: white;
+        }
+
+        .gopay-icon {
+            background: linear-gradient(45deg, #10B981, #059669);
+            color: white;
+        }
+
+        .qris-icon {
+            background: linear-gradient(45deg, #F59E0B, #D97706);
+            color: white;
+        }
+
+        .bank-icon {
+            background: linear-gradient(45deg, #EF4444, #DC2626);
+            color: white;
+        }
+
+        .glow-text {
+            background: linear-gradient(45deg, #3B82F6, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .account-info {
+            background: rgba(30, 30, 30, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .copy-success.show {
+            transform: translateX(0);
+        }
+
+        .qr-placeholder {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .header-glow {
+            position: relative;
+        }
+
+        .header-glow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div id="welcome-popup">
+        <div class="popup-content">
+            <h2 class="text-3xl font-bold mb-3 glow-text">Selamat Datang</h2>
+            <p class="text-gray-300 mb-6">Klik untuk melanjutkan pembayaran</p>
+            <button id="enter-button" class="neon-btn w-full">
+                <i class="fas fa-arrow-right mr-2"></i>
+                Lanjutkan
+            </button>
+        </div>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="https://files.catbox.moe/gcgvf5.mp3" type="audio/mpeg">
+        Browser Anda tidak mendukung elemen audio.
+    </audio>
+
+    <div class="floating-shapes">
+        <div class="shape w-32 h-32 bg-blue-500 rounded-full"></div>
+        <div class="shape w-24 h-24 bg-purple-500 rounded-full"></div>
+        <div class="shape w-28 h-28 bg-blue-400 rounded-full"></div>
+    </div>
+
+    <div class="copy-success" id="copySuccess">
+        <i class="fas fa-check mr-2"></i>
+        Berhasil disalin ke clipboard!
+    </div>
+
+    <div class="min-h-screen">
+        <header class="py-8">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-center mb-8">
+                    <div class="header-glow">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-wallet text-white text-xl"></i>
+                            </div>
+                            <h1 class="text-4xl font-bold glow-text">Payment Info</h1>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center text-gray-400 max-w-2xl mx-auto">
+                    Pilih metode pembayaran yang tersedia di bawah ini. Semua transaksi aman dan terenkripsi.
+                </p>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 pb-12">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                
+                <div class="payment-card">
+                    <div class="dana-icon payment-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">DANA</h3>
+                    <p class="text-gray-400 mb-4">Transfer langsung ke DANA</p>
+                    
+                    <div class="account-info">
+                        <p class="text-sm text-gray-300 mb-1">Nomor DANA:</p>
+                        <p class="text-lg font-semibold text-blue-400" id="dana-number">0821-2644-6272</p>
+                    </div>
+                    
+                    <button class="neon-btn w-full" onclick="copyToClipboard('dana-number')">
+                        <i class="fas fa-copy mr-2"></i>
+                        Salin Nomor
+                    </button>
+                </div>
+
+                <div class="payment-card">
+                    <div class="ovo-icon payment-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">OVO</h3>
+                    <p class="text-gray-400 mb-4">Transfer melalui OVO</p>
+                    
+                    <div class="account-info">
+                        <p class="text-sm text-gray-300 mb-1">Nomor OVO:</p>
+                        <p class="text-lg font-semibold text-purple-400" id="ovo-number">0821-2644-6272</p>
+                    </div>
+                    
+                    <button class="neon-btn w-full" onclick="copyToClipboard('ovo-number')">
+                        <i class="fas fa-copy mr-2"></i>
+                        Salin Nomor
+                    </button>
+                </div>
+
+                <div class="payment-card">
+                    <div class="gopay-icon payment-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">GoPay</h3>
+                    <p class="text-gray-400 mb-4">Bayar dengan GoPay</p>
+                    
+                    <div class="account-info">
+                        <p class="text-sm text-gray-300 mb-1">Nomor GoPay:</p>
+                        <p class="text-lg font-semibold text-green-400" id="gopay-number">0821-2644-6272</p>
+                    </div>
+                    
+                    <button class="neon-btn w-full" onclick="copyToClipboard('gopay-number')">
+                        <i class="fas fa-copy mr-2"></i>
+                        Salin Nomor
+                    </button>
+                </div>
+
+                <div class="payment-card">
+                    <div class="qris-icon payment-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">QRIS</h3>
+                    <p class="text-gray-400 mb-4">Scan QR Code untuk pembayaran</p>
+                    
+                    <div class="qr-placeholder">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    
+                    <button class="neon-btn w-full" onclick="alert('Fitur scan QR akan segera tersedia!')">
+                        <i class="fas fa-camera mr-2"></i>
+                        Scan QR Code
+                    </button>
+                </div>
+
+                <div class="payment-card md:col-span-2">
+                    <div class="bank-icon payment-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Transfer Bank</h3>
+                    <p class="text-gray-400 mb-4">Transfer melalui rekening bank</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="account-info">
+                            <p class="text-sm text-gray-300 mb-1">Bank BCA:</p>
+                            <p class="text-lg font-semibold text-red-400" id="bca-number">1234567890</p>
+                            <p class="text-sm text-gray-400">a.n. Kaizel Developer</p>
+                        </div>
+                        <div class="account-info">
+                            <p class="text-sm text-gray-300 mb-1">Bank Mandiri:</p>
+                            <p class="text-lg font-semibold text-red-400" id="mandiri-number">0987654321</p>
+                            <p class="text-sm text-gray-400">a.n. Kaizel Developer</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 mt-4">
+                        <button class="neon-btn flex-1" onclick="copyToClipboard('bca-number')">
+                            <i class="fas fa-copy mr-2"></i>
+                            Salin BCA
+                        </button>
+                        <button class="neon-btn flex-1" onclick="copyToClipboard('mandiri-number')">
+                            <i class="fas fa-copy mr-2"></i>
+                            Salin Mandiri
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 max-w-4xl mx-auto">
+                <div class="payment-card">
+                    <h3 class="text-xl font-semibold mb-4 glow-text">Petunjuk Pembayaran</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold mb-2 text-blue-400">E-Wallet (DANA, OVO, GoPay)</h4>
+                            <ol class="text-gray-300 space-y-1 text-sm">
+                                <li>1. Buka aplikasi e-wallet Anda</li>
+                                <li>2. Pilih menu "Transfer" atau "Kirim"</li>
+                                <li>3. Masukkan nomor yang sudah disalin</li>
+                                <li>4. Masukkan jumlah pembayaran</li>
+                                <li>5. Konfirmasi transaksi</li>
+                            </ol>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-2 text-purple-400">Transfer Bank</h4>
+                            <ol class="text-gray-300 space-y-1 text-sm">
+                                <li>1. Buka aplikasi mobile banking</li>
+                                <li>2. Pilih "Transfer ke Bank Lain"</li>
+                                <li>3. Masukkan nomor rekening</li>
+                                <li>4. Isi nominal dan berita transfer</li>
+                                <li>5. Konfirmasi dengan PIN/OTP</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center py-8 border-t border-gray-800">
+            <p class="text-gray-400">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Transaksi Aman & Terenkripsi
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const popup = document.getElementById('welcome-popup');
+            const enterButton = document.getElementById('enter-button');
+            const music = document.getElementById('background-music');
+
+            enterButton.addEventListener('click', () => {
+                popup.classList.add('hidden');
+                music.play().catch(error => {
+                    console.error("Gagal memulai musik:", error);
+                });
+            });
+        });
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess();
+            }).catch(err => {
+                console.error('Gagal menyalin: ', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopySuccess();
+                } catch (e) {
+                    console.error('Gagal menyalin dengan execCommand: ', e);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function showCopySuccess() {
+            const success = document.getElementById('copySuccess');
+            success.classList.add('show');
+            
+            setTimeout(() => {
+                success.classList.remove('show');
+            }, 3000);
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.payment-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
+
+<!--
+   Created By Kai
+   Contact https://wa.me/6282126446272
+ 
+   Pake Sc Error? Join Saja Disini dan report menggunakan disqus yang disediakan di desk
+   > https://whatsapp.com/channel/0029VanrndJICVfcrjFr3x2R
+   > https://whatsapp.com/channel/0029VanrndJICVfcrjFr3x2R
+   > https://whatsapp.com/channel/0029VanrndJICVfcrjFr3x2R
+ 
+   Mau Jasa bikin web? porto? Chat Saja
+   Menerima tapi html css JavaScript aja soalnya yang lain malas
+-->
